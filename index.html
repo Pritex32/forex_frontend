@@ -98,11 +98,23 @@
             <div id="atrChart" class="chart"></div>
         </div>
 
-        <div class="section">
-            <h2>Pivot Points</h2>
-            <button onclick="loadPivots()">Load Pivots</button>
-            <div id="pivots"></div>
-        </div>
+            <div class="section">
+                <h2>Charts</h2>
+                <button onclick="load1HChart()">Load 1-Hour Chart</button>
+                <div id="chart1H" class="chart"></div>
+            </div>
+
+            <div class="section">
+                <h2>Anomaly Detection</h2>
+                <button onclick="detectAnomalies()">Detect Anomalies</button>
+                <div id="anomalies"></div>
+            </div>
+
+            <div class="section">
+                <h2>Pivot Points</h2>
+                <button onclick="loadPivots()">Load Pivots</button>
+                <div id="pivots"></div>
+            </div>
     </div>
 
     <script>
@@ -232,6 +244,26 @@
             const atrResponse = await fetch('/api/indicators/charts/atr');
             const atrFig = await atrResponse.json();
             Plotly.newPlot('atrChart', atrFig.data, atrFig.layout);
+        }
+
+        async function load1HChart() {
+            const response = await fetch('/api/indicators/charts/1h');
+            const fig = await response.json();
+            Plotly.newPlot('chart1H', fig.data, fig.layout);
+        }
+
+        async function detectAnomalies() {
+            const response = await fetch('/api/indicators/anomaly/detection');
+            const result = await response.json();
+            if (result.error) {
+                alert(result.error);
+                return;
+            }
+            const anomaliesDiv = document.getElementById('anomalies');
+            anomaliesDiv.innerHTML = `
+                <div class="metric">Anomalies Detected: ${result.anomalies.length}</div>
+                <div class="metric">Clusters: ${Math.max(...result.clusters) + 1}</div>
+            `;
         }
 
         async function loadPivots() {
