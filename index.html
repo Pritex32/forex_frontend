@@ -26,7 +26,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>LSTM-Based Forex Signal Generator</h1>
+            <h1>Forex Entry/Exit Prediction (XGBoost Multiclass + S/R Zones)</h1>
             <p><strong>Disclaimer: Not a financial advise</strong></p>
         </div>
 
@@ -59,6 +59,7 @@
                 <select id="modelType">
                     <option value="lstm">LSTM</option>
                     <option value="cnn_lstm">CNN-LSTM</option>
+                    <option value="xgboost">XGBoost</option>
                 </select>
             </div>
             <button onclick="trainModel()">Train Model</button>
@@ -77,11 +78,12 @@
 
         <div class="section">
             <h2>Signals</h2>
-            <div class="form-group">
+             <div class="form-group">
                 <label for="signalModel">Model for Signals:</label>
                 <select id="signalModel">
                     <option value="lstm">LSTM</option>
                     <option value="cnn_lstm">CNN-LSTM</option>
+                    <option value="xgboost">XGBoost</option>
                 </select>
             </div>
             <div class="form-group">
@@ -179,10 +181,14 @@
                 body: JSON.stringify({ model_type: modelType, n_periods: parseInt(nPeriods) })
             });
             const predictions = await response.json();
-            const dates = predictions.map(p => p.dates);
-            const opens = predictions.map(p => p.open);
-            const data = [{ x: dates, y: opens, type: 'line', name: 'Forecast', mode: 'lines+markers', marker: { color: 'red' } }];
-            Plotly.newPlot('forecastChart', data);
+            if (predictions.signal) {
+                document.getElementById('forecastChart').innerHTML = `<div class="signal ${predictions.signal.toLowerCase()}">Predicted Signal: ${predictions.signal}</div>`;
+            } else {
+                const dates = predictions.map(p => p.dates);
+                const opens = predictions.map(p => p.open);
+                const data = [{ x: dates, y: opens, type: 'line', name: 'Forecast', mode: 'lines+markers', marker: { color: 'red' } }];
+                Plotly.newPlot('forecastChart', data);
+            }
         }
 
         async function generateSignals() {
