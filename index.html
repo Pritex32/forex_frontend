@@ -126,7 +126,7 @@
 
         async function fetchData() {
             const instrument = document.getElementById('instrument').value;
-            const response = await fetch('${API_BASE}/api/data/fetch', {
+            const response = await fetch(`${API_BASE}/api/data/fetch`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ instrument: instrument })
@@ -143,7 +143,7 @@
                 return;
             }
             const modelType = document.getElementById('modelType').value;
-            const response = await fetch('${API_BASE}/api/models/train', {
+            const response = await fetch(`${API_BASE}/api/models/train`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ data: fetchedData, model_type: modelType })
@@ -160,7 +160,7 @@
             }
             const modelType = document.getElementById('modelType').value;
             const nPeriods = document.getElementById('nPeriods').value;
-            const response = await fetch('${API_BASE}/api/models/predict', {
+            const response = await fetch(`${API_BASE}/api/models/predict`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ model_type: modelType, n_periods: parseInt(nPeriods) })
@@ -181,7 +181,7 @@
             const riskPct = document.getElementById('riskPct').value;
             const slPips = document.getElementById('slPips').value;
             const tpPips = document.getElementById('tpPips').value;
-            const response = await fetch('${API_BASE}/api/signals/generate', {
+            const response = await fetch(`${API_BASE}/api/signals/generate`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ model_type: signalModel, risk_pct: parseFloat(riskPct), sl_pips: parseInt(slPips), tp_pips: parseInt(tpPips) })
@@ -204,7 +204,7 @@
                 alert('No trade signal');
                 return;
             }
-            const response = await fetch('${API_BASE}/api/trading/place_order', {
+            const response = await fetch(`${API_BASE}/api/trading/place_order`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -220,7 +220,7 @@
         }
 
         async function loadIndicators() {
-            const response = await fetch('${API_BASE}/api/indicators/values');
+            const response = await fetch(`${API_BASE}/api/indicators/values`);
             const ind = await response.json();
             if (ind.error) {
                 alert(ind.error);
@@ -234,27 +234,27 @@
                 <div class="metric">ATR: ${ind.atr}</div>
             `;
 
-            const rsiResponse = await fetch('${API_BASE}/api/indicators/charts/rsi');
+            const rsiResponse = await fetch(`${API_BASE}/api/indicators/charts/rsi`);
             const rsiFig = await rsiResponse.json();
             Plotly.newPlot('rsiChart', rsiFig.data, rsiFig.layout);
 
-            const macdResponse = await fetch('${API_BASE}/api/indicators/charts/macd');
+            const macdResponse = await fetch(`${API_BASE}/api/indicators/charts/macd`);
             const macdFig = await macdResponse.json();
             Plotly.newPlot('macdChart', macdFig.data, macdFig.layout);
 
-            const atrResponse = await fetch('${API_BASE}/api/indicators/charts/atr');
+            const atrResponse = await fetch(`${API_BASE}/api/indicators/charts/atr`);
             const atrFig = await atrResponse.json();
             Plotly.newPlot('atrChart', atrFig.data, atrFig.layout);
         }
 
         async function load1HChart() {
-            const response = await fetch('${API_BASE}/api/indicators/charts/1h');
+            const response = await fetch(`${API_BASE}/api/indicators/charts/1h`);
             const fig = await response.json();
             Plotly.newPlot('chart1H', fig.data, fig.layout);
         }
 
         async function detectAnomalies() {
-            const response = await fetch('${API_BASE}/api/indicators/anomaly/detection');
+            const response = await fetch(`${API_BASE}/api/indicators/anomaly/detection`);
             const result = await response.json();
             if (result.error) {
                 alert(result.error);
@@ -268,7 +268,7 @@
         }
 
         async function loadPivots() {
-            const response = await fetch('${API_BASE}/api/indicators/pivot/values');
+            const response = await fetch(`${API_BASE}/api/indicators/pivot/values`);
             const pivots = await response.json();
             if (pivots.error) {
                 alert(pivots.error);
