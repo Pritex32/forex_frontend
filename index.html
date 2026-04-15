@@ -36,6 +36,18 @@
                 <label for="instrument">Forex Pair:</label>
                 <input type="text" id="instrument" value="GBP_USD">
             </div>
+            <div class="form-group">
+                <label for="granularity">Granularity:</label>
+                <select id="granularity">
+                    <option value="D">Daily</option>
+                    <option value="H1">1 Hour</option>
+                    <option value="H4">4 Hours</option>
+                    <option value="M30">30 Minutes</option>
+                    <option value="M15">15 Minutes</option>
+                    <option value="M5">5 Minutes</option>
+                    <option value="M1">1 Minute</option>
+                </select>
+            </div>
             <button onclick="fetchData()">Fetch Data</button>
             <div id="dataStatus"></div>
         </div>
@@ -126,10 +138,11 @@
 
         async function fetchData() {
             const instrument = document.getElementById('instrument').value;
+            const granularity = document.getElementById('granularity').value;
             const response = await fetch(`${API_BASE}/api/data/fetch`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ instrument: instrument })
+                body: JSON.stringify({ instrument: instrument, granularity: granularity })
             });
             const result = await response.json();
             document.getElementById('dataStatus').innerText = result.message;
