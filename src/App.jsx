@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './App.css'; // We'll add the CSS
 
-const API_BASE = 'https://forex-app-rc3d.onrender.com'; // Change to your backend URL
+const API_BASE = 'https://forex-app-rc3d.onrender.com'; // Local backend URL
 
 function App() {
   const [instrument, setInstrument] = useState('GBP_USD');
@@ -34,7 +34,7 @@ function App() {
         setDataStatus(result.message);
       }
     } catch (error) {
-      setDataStatus('Error fetching data');
+      setDataStatus(`Error fetching data: ${error.message}`);
     }
   };
 
@@ -52,7 +52,7 @@ function App() {
         setTrainStatus(result.message);
       }
     } catch (error) {
-      setTrainStatus('Error training model');
+      setTrainStatus(`Error training model: ${error.message}`);
     }
   };
 
@@ -70,7 +70,7 @@ function App() {
         setForecast(predictions);
       }
     } catch (error) {
-      setForecast({ error: 'Error predicting' });
+      setForecast({ error: `Error predicting: ${error.message}` });
     }
   };
 
@@ -88,7 +88,7 @@ function App() {
         setSignals(signalsData);
       }
     } catch (error) {
-      setSignals({ error: 'Error generating signals' });
+      setSignals({ error: `Error generating signals: ${error.message}` });
     }
   };
 
@@ -116,7 +116,7 @@ function App() {
         alert(result.message);
       }
     } catch (error) {
-      alert('Error executing trade');
+      alert(`Error executing trade: ${error.message}`);
     }
   };
 
@@ -130,7 +130,7 @@ function App() {
         setIndicators(ind);
       }
     } catch (error) {
-      setIndicators({ error: 'Error loading indicators' });
+      setIndicators({ error: `Error loading indicators: ${error.message}` });
     }
   };
 
@@ -144,7 +144,7 @@ function App() {
         setAnomalies(result);
       }
     } catch (error) {
-      setAnomalies({ error: 'Error detecting anomalies' });
+      setAnomalies({ error: `Error detecting anomalies: ${error.message}` });
     }
   };
 
@@ -158,7 +158,7 @@ function App() {
         setPivots(pivotsData);
       }
     } catch (error) {
-      setPivots({ error: 'Error loading pivots' });
+      setPivots({ error: `Error loading pivots: ${error.message}` });
     }
   };
 
