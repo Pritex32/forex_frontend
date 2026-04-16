@@ -147,9 +147,13 @@
                 body: JSON.stringify({ instrument: instrument, granularity: granularity })
             });
             const result = await response.json();
-            document.getElementById('dataStatus').innerText = result.message;
-            fetchedData = result.data;
-            dataFetched = true;
+            if (result.error) {
+                document.getElementById('dataStatus').innerText = result.error;
+            } else {
+                document.getElementById('dataStatus').innerText = result.message;
+                fetchedData = result.data;
+                dataFetched = true;
+            }
         }
 
         async function trainModel() {
@@ -164,8 +168,12 @@
                 body: JSON.stringify({ data: fetchedData, model_type: modelType })
             });
             const result = await response.json();
-            document.getElementById('trainStatus').innerText = result.message;
-            modelTrained = true;
+            if (result.error) {
+                document.getElementById('trainStatus').innerText = result.error;
+            } else {
+                document.getElementById('trainStatus').innerText = result.message;
+                modelTrained = true;
+            }
         }
 
         async function predict() {
@@ -181,7 +189,9 @@
                 body: JSON.stringify({ model_type: modelType, n_periods: parseInt(nPeriods) })
             });
             const predictions = await response.json();
-            if (predictions.signal) {
+            if (predictions.error) {
+                document.getElementById('forecastChart').innerHTML = predictions.error;
+            } else if (predictions.signal) {
                 document.getElementById('forecastChart').innerHTML = `<div class="signal ${predictions.signal.toLowerCase()}">Predicted Signal: ${predictions.signal}</div>`;
             } else {
                 const dates = predictions.map(p => p.dates);
@@ -206,16 +216,20 @@
                 body: JSON.stringify({ model_type: signalModel, risk_pct: parseFloat(riskPct), sl_pips: parseInt(slPips), tp_pips: parseInt(tpPips) })
             });
             const signals = await response.json();
-            currentSignals = signals;
-            const signalsDiv = document.getElementById('signals');
-            signalsDiv.innerHTML = `
-                <div class="metric">Current Price: ${signals.current_price.toFixed(4)}</div>
-                <div class="metric">Predicted Price: ${signals.predicted_price.toFixed(4)}</div>
-                <div class="signal ${signals.signal.toLowerCase()}">Signal: ${signals.signal}</div>
-                <div class="signal ${signals.atr_signal.toLowerCase()}">ATR Signal: ${signals.atr_signal}</div>
-                <div class="signal ${signals.pivot_signal.toLowerCase()}">Pivot Signal: ${signals.pivot_signal}</div>
-                <div class="signal ${signals.smart_money_signal.replace(' ', '').toLowerCase()}">Smart Money Signal: ${signals.smart_money_signal}</div>
-            `;
+            if (signals.error) {
+                document.getElementById('signals').innerText = signals.error;
+            } else {
+                currentSignals = signals;
+                const signalsDiv = document.getElementById('signals');
+                signalsDiv.innerHTML = `
+                    <div class="metric">Current Price: ${signals.current_price.toFixed(4)}</div>
+                    <div class="metric">Predicted Price: ${signals.predicted_price.toFixed(4)}</div>
+                    <div class="signal ${signals.signal.toLowerCase()}">Signal: ${signals.signal}</div>
+                    <div class="signal ${signals.atr_signal.toLowerCase()}">ATR Signal: ${signals.atr_signal}</div>
+                    <div class="signal ${signals.pivot_signal.toLowerCase()}">Pivot Signal: ${signals.pivot_signal}</div>
+                    <div class="signal ${signals.smart_money_signal.replace(' ', '').toLowerCase()}">Smart Money Signal: ${signals.smart_money_signal}</div>
+                `;
+            }
         }
 
         async function executeTrade() {
@@ -235,14 +249,18 @@
                 })
             });
             const result = await response.json();
-            alert(result.message);
+            if (result.error) {
+                alert(result.error);
+            } else {
+                alert(result.message);
+            }
         }
 
         async function loadIndicators() {
             const response = await fetch(`${API_BASE}/api/indicators/values`);
             const ind = await response.json();
             if (ind.error) {
-                alert(ind.error);
+                document.getElementById('indicators').innerText = ind.error;
                 return;
             }
             const indDiv = document.getElementById('indicators');
@@ -255,28 +273,44 @@
 
             const rsiResponse = await fetch(`${API_BASE}/api/indicators/charts/rsi`);
             const rsiFig = await rsiResponse.json();
-            Plotly.newPlot('rsiChart', rsiFig.data, rsiFig.layout);
+            if (rsiFig.error) {
+                document.getElementById('rsiChart').innerText = rsiFig.error;
+            } else {
+                Plotly.newPlot('rsiChart', rsiFig.data, rsiFig.layout);
+            }
 
             const macdResponse = await fetch(`${API_BASE}/api/indicators/charts/macd`);
             const macdFig = await macdResponse.json();
-            Plotly.newPlot('macdChart', macdFig.data, macdFig.layout);
+            if (macdFig.error) {
+                document.getElementById('macdChart').innerText = macdFig.error;
+            } else {
+                Plotly.newPlot('macdChart', macdFig.data, macdFig.layout);
+            }
 
             const atrResponse = await fetch(`${API_BASE}/api/indicators/charts/atr`);
             const atrFig = await atrResponse.json();
-            Plotly.newPlot('atrChart', atrFig.data, atrFig.layout);
+            if (atrFig.error) {
+                document.getElementById('atrChart').innerText = atrFig.error;
+            } else {
+                Plotly.newPlot('atrChart', atrFig.data, atrFig.layout);
+            }
         }
 
         async function load1HChart() {
             const response = await fetch(`${API_BASE}/api/indicators/charts/1h`);
             const fig = await response.json();
-            Plotly.newPlot('chart1H', fig.data, fig.layout);
+            if (fig.error) {
+                document.getElementById('chart1H').innerText = fig.error;
+            } else {
+                Plotly.newPlot('chart1H', fig.data, fig.layout);
+            }
         }
 
         async function detectAnomalies() {
             const response = await fetch(`${API_BASE}/api/indicators/anomaly/detection`);
             const result = await response.json();
             if (result.error) {
-                alert(result.error);
+                document.getElementById('anomalies').innerText = result.error;
                 return;
             }
             const anomaliesDiv = document.getElementById('anomalies');
@@ -290,7 +324,7 @@
             const response = await fetch(`${API_BASE}/api/indicators/pivot/values`);
             const pivots = await response.json();
             if (pivots.error) {
-                alert(pivots.error);
+                document.getElementById('pivots').innerText = pivots.error;
                 return;
             }
             const pivotsDiv = document.getElementById('pivots');
