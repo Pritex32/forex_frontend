@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import './App.css'; // We'll add the CSS
 
-const API_BASE = 'https://forex-app-rc3d.onrender.com'; // Local backend URL
+const API_BASE = 'https://forex-app-rc3d.onrender.com'; // Change to your backend URL
 
 function App() {
   const [instrument, setInstrument] = useState('GBP_USD');
@@ -20,13 +20,32 @@ function App() {
   const [anomalies, setAnomalies] = useState(null);
   const [pivots, setPivots] = useState(null);
 
+  // Loading states
+  const [loadingData, setLoadingData] = useState(false);
+  const [loadingTrain, setLoadingTrain] = useState(false);
+  const [loadingPredict, setLoadingPredict] = useState(false);
+  const [loadingSignals, setLoadingSignals] = useState(false);
+  const [loadingIndicators, setLoadingIndicators] = useState(false);
+  const [loadingAnomalies, setLoadingAnomalies] = useState(false);
+  const [loadingPivots, setLoadingPivots] = useState(false);
+
   const fetchData = async () => {
+    if (loadingData) return; // Prevent multiple clicks
+    setLoadingData(true);
+    setDataStatus('Fetching data... This may take several minutes.');
+
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minute timeout
+
       const response = await fetch(`${API_BASE}/api/data/fetch`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ instrument, granularity })
+        body: JSON.stringify({ instrument, granularity }),
+        signal: controller.signal
       });
+      clearTimeout(timeoutId);
+
       const result = await response.json();
       if (result.error) {
         setDataStatus(result.error);
@@ -34,17 +53,33 @@ function App() {
         setDataStatus(result.message);
       }
     } catch (error) {
-      setDataStatus(`Error fetching data: ${error.message}`);
+      if (error.name === 'AbortError') {
+        setDataStatus('Request timed out. Data fetching may still be running on the server.');
+      } else {
+        setDataStatus(`Error fetching data: ${error.message}`);
+      }
+    } finally {
+      setLoadingData(false);
     }
   };
 
   const trainModel = async () => {
+    if (loadingTrain) return; // Prevent multiple clicks
+    setLoadingTrain(true);
+    setTrainStatus('Training model... This may take several minutes.');
+
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minute timeout for training
+
       const response = await fetch(`${API_BASE}/api/models/train`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model_type: modelType })
+        body: JSON.stringify({ model_type: modelType }),
+        signal: controller.signal
       });
+      clearTimeout(timeoutId);
+
       const result = await response.json();
       if (result.error) {
         setTrainStatus(result.error);
@@ -52,17 +87,33 @@ function App() {
         setTrainStatus(result.message);
       }
     } catch (error) {
-      setTrainStatus(`Error training model: ${error.message}`);
+      if (error.name === 'AbortError') {
+        setTrainStatus('Training timed out. Model training may still be running on the server.');
+      } else {
+        setTrainStatus(`Error training model: ${error.message}`);
+      }
+    } finally {
+      setLoadingTrain(false);
     }
   };
 
   const predict = async () => {
+    if (loadingPredict) return; // Prevent multiple clicks
+    setLoadingPredict(true);
+    setForecast({ loading: 'Generating predictions...' });
+
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000); // 1 minute timeout
+
       const response = await fetch(`${API_BASE}/api/models/predict`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model_type: modelType, n_periods: parseInt(nPeriods) })
+        body: JSON.stringify({ model_type: modelType, n_periods: parseInt(nPeriods) }),
+        signal: controller.signal
       });
+      clearTimeout(timeoutId);
+
       const predictions = await response.json();
       if (predictions.error) {
         setForecast({ error: predictions.error });
@@ -70,17 +121,33 @@ function App() {
         setForecast(predictions);
       }
     } catch (error) {
-      setForecast({ error: `Error predicting: ${error.message}` });
+      if (error.name === 'AbortError') {
+        setForecast({ error: 'Prediction timed out. Please try again.' });
+      } else {
+        setForecast({ error: `Error predicting: ${error.message}` });
+      }
+    } finally {
+      setLoadingPredict(false);
     }
   };
 
   const generateSignals = async () => {
+    if (loadingSignals) return; // Prevent multiple clicks
+    setLoadingSignals(true);
+    setSignals({ loading: 'Generating trading signals...' });
+
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000); // 1 minute timeout
+
       const response = await fetch(`${API_BASE}/api/signals/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model_type: signalModel, risk_pct: parseFloat(riskPct), sl_pips: parseInt(slPips), tp_pips: parseInt(tpPips) })
+        body: JSON.stringify({ model_type: signalModel, risk_pct: parseFloat(riskPct), sl_pips: parseInt(slPips), tp_pips: parseInt(tpPips) }),
+        signal: controller.signal
       });
+      clearTimeout(timeoutId);
+
       const signalsData = await response.json();
       if (signalsData.error) {
         setSignals({ error: signalsData.error });
@@ -88,7 +155,13 @@ function App() {
         setSignals(signalsData);
       }
     } catch (error) {
-      setSignals({ error: `Error generating signals: ${error.message}` });
+      if (error.name === 'AbortError') {
+        setSignals({ error: 'Signal generation timed out. Please try again.' });
+      } else {
+        setSignals({ error: `Error generating signals: ${error.message}` });
+      }
+    } finally {
+      setLoadingSignals(false);
     }
   };
 
@@ -121,8 +194,19 @@ function App() {
   };
 
   const loadIndicators = async () => {
+    if (loadingIndicators) return; // Prevent multiple clicks
+    setLoadingIndicators(true);
+    setIndicators({ loading: 'Loading technical indicators...' });
+
     try {
-      const response = await fetch(`${API_BASE}/api/indicators/values`);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+      const response = await fetch(`${API_BASE}/api/indicators/values`, {
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+
       const ind = await response.json();
       if (ind.error) {
         setIndicators({ error: ind.error });
@@ -130,13 +214,30 @@ function App() {
         setIndicators(ind);
       }
     } catch (error) {
-      setIndicators({ error: `Error loading indicators: ${error.message}` });
+      if (error.name === 'AbortError') {
+        setIndicators({ error: 'Loading indicators timed out. Please try again.' });
+      } else {
+        setIndicators({ error: `Error loading indicators: ${error.message}` });
+      }
+    } finally {
+      setLoadingIndicators(false);
     }
   };
 
   const detectAnomalies = async () => {
+    if (loadingAnomalies) return; // Prevent multiple clicks
+    setLoadingAnomalies(true);
+    setAnomalies({ loading: 'Detecting anomalies...' });
+
     try {
-      const response = await fetch(`${API_BASE}/api/indicators/anomaly/detection`);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000); // 1 minute timeout
+
+      const response = await fetch(`${API_BASE}/api/indicators/anomaly/detection`, {
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+
       const result = await response.json();
       if (result.error) {
         setAnomalies({ error: result.error });
@@ -144,13 +245,30 @@ function App() {
         setAnomalies(result);
       }
     } catch (error) {
-      setAnomalies({ error: `Error detecting anomalies: ${error.message}` });
+      if (error.name === 'AbortError') {
+        setAnomalies({ error: 'Anomaly detection timed out. Please try again.' });
+      } else {
+        setAnomalies({ error: `Error detecting anomalies: ${error.message}` });
+      }
+    } finally {
+      setLoadingAnomalies(false);
     }
   };
 
   const loadPivots = async () => {
+    if (loadingPivots) return; // Prevent multiple clicks
+    setLoadingPivots(true);
+    setPivots({ loading: 'Loading pivot points...' });
+
     try {
-      const response = await fetch(`${API_BASE}/api/indicators/pivot/values`);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+      const response = await fetch(`${API_BASE}/api/indicators/pivot/values`, {
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+
       const pivotsData = await response.json();
       if (pivotsData.error) {
         setPivots({ error: pivotsData.error });
@@ -158,7 +276,13 @@ function App() {
         setPivots(pivotsData);
       }
     } catch (error) {
-      setPivots({ error: `Error loading pivots: ${error.message}` });
+      if (error.name === 'AbortError') {
+        setPivots({ error: 'Loading pivots timed out. Please try again.' });
+      } else {
+        setPivots({ error: `Error loading pivots: ${error.message}` });
+      }
+    } finally {
+      setLoadingPivots(false);
     }
   };
 
@@ -187,7 +311,9 @@ function App() {
             <option value="M1">1 Minute</option>
           </select>
         </div>
-        <button onClick={fetchData}>Fetch Data</button>
+        <button onClick={fetchData} disabled={loadingData}>
+          {loadingData ? 'Fetching Data...' : 'Fetch Data'}
+        </button>
         <div id="dataStatus">{dataStatus}</div>
       </div>
 
@@ -201,7 +327,9 @@ function App() {
             <option value="xgboost">XGBoost</option>
           </select>
         </div>
-        <button onClick={trainModel}>Train Model</button>
+        <button onClick={trainModel} disabled={loadingTrain}>
+          {loadingTrain ? 'Training Model...' : 'Train Model'}
+        </button>
         <div id="trainStatus">{trainStatus}</div>
       </div>
 
@@ -211,9 +339,13 @@ function App() {
           <label htmlFor="nPeriods">Number of Days:</label>
           <input type="number" id="nPeriods" value={nPeriods} onChange={(e) => setNPeriods(e.target.value)} />
         </div>
-        <button onClick={predict}>Predict</button>
+        <button onClick={predict} disabled={loadingPredict}>
+          {loadingPredict ? 'Predicting...' : 'Predict'}
+        </button>
         <div id="forecastChart" className="chart">
-          {forecast && forecast.error ? (
+          {forecast && forecast.loading ? (
+            <div>{forecast.loading}</div>
+          ) : forecast && forecast.error ? (
             <div>{forecast.error}</div>
           ) : forecast && forecast.signal ? (
             <div className={`signal ${forecast.signal.toLowerCase()}`}>Predicted Signal: {forecast.signal}</div>
@@ -245,9 +377,13 @@ function App() {
           <label htmlFor="tpPips">Take Profit Pips:</label>
           <input type="number" id="tpPips" value={tpPips} onChange={(e) => setTpPips(e.target.value)} />
         </div>
-        <button onClick={generateSignals}>Generate Signals</button>
+        <button onClick={generateSignals} disabled={loadingSignals}>
+          {loadingSignals ? 'Generating Signals...' : 'Generate Signals'}
+        </button>
         <div id="signals">
-          {signals && signals.error ? (
+          {signals && signals.loading ? (
+            <div>{signals.loading}</div>
+          ) : signals && signals.error ? (
             <div>{signals.error}</div>
           ) : signals ? (
             <>
@@ -260,14 +396,18 @@ function App() {
             </>
           ) : null}
         </div>
-        <button onClick={executeTrade} style={{ backgroundColor: '#28a745' }}>Execute Trade</button>
+        <button onClick={executeTrade} disabled={!signals || signals.signal === 'Hold' || signals.loading} style={{ backgroundColor: '#28a745' }}>Execute Trade</button>
       </div>
 
       <div className="section">
         <h2>Technical Indicators</h2>
-        <button onClick={loadIndicators}>Load Indicators</button>
+        <button onClick={loadIndicators} disabled={loadingIndicators}>
+          {loadingIndicators ? 'Loading Indicators...' : 'Load Indicators'}
+        </button>
         <div id="indicators">
-          {indicators && indicators.error ? (
+          {indicators && indicators.loading ? (
+            <div>{indicators.loading}</div>
+          ) : indicators && indicators.error ? (
             <div>{indicators.error}</div>
           ) : indicators ? (
             <>
@@ -291,9 +431,13 @@ function App() {
 
       <div className="section">
         <h2>Anomaly Detection</h2>
-        <button onClick={detectAnomalies}>Detect Anomalies</button>
+        <button onClick={detectAnomalies} disabled={loadingAnomalies}>
+          {loadingAnomalies ? 'Detecting Anomalies...' : 'Detect Anomalies'}
+        </button>
         <div id="anomalies">
-          {anomalies && anomalies.error ? (
+          {anomalies && anomalies.loading ? (
+            <div>{anomalies.loading}</div>
+          ) : anomalies && anomalies.error ? (
             <div>{anomalies.error}</div>
           ) : anomalies ? (
             <>
@@ -306,9 +450,13 @@ function App() {
 
       <div className="section">
         <h2>Pivot Points</h2>
-        <button onClick={loadPivots}>Load Pivots</button>
+        <button onClick={loadPivots} disabled={loadingPivots}>
+          {loadingPivots ? 'Loading Pivots...' : 'Load Pivots'}
+        </button>
         <div id="pivots">
-          {pivots && pivots.error ? (
+          {pivots && pivots.loading ? (
+            <div>{pivots.loading}</div>
+          ) : pivots && pivots.error ? (
             <div>{pivots.error}</div>
           ) : pivots ? (
             <>
